@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6A1E04DE1ADDBB35006704C5 /* comprovacio.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A1E04DD1ADDBB35006704C5 /* comprovacio.c */; };
+		6A1E04E11ADDD4D7006704C5 /* mostrarPantalla.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A1E04DF1ADDD4D7006704C5 /* mostrarPantalla.c */; };
 		6A96D56A1ADC1BEF00085E3D /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A96D5691ADC1BEF00085E3D /* main.c */; };
 /* End PBXBuildFile section */
 
@@ -23,8 +25,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6A1E04DD1ADDBB35006704C5 /* comprovacio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = comprovacio.c; sourceTree = "<group>"; };
+		6A1E04DF1ADDD4D7006704C5 /* mostrarPantalla.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mostrarPantalla.c; sourceTree = "<group>"; };
+		6A1E04E01ADDD4D7006704C5 /* mostrarPantalla.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mostrarPantalla.h; sourceTree = "<group>"; };
 		6A96D5661ADC1BEF00085E3D /* SOA_Practica */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SOA_Practica; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A96D5691ADC1BEF00085E3D /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		6A96D5701ADC23EC00085E3D /* comprovacio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = comprovacio.h; sourceTree = "<group>"; };
+		6A96D5711ADC249D00085E3D /* tipus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tipus.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +65,11 @@
 			isa = PBXGroup;
 			children = (
 				6A96D5691ADC1BEF00085E3D /* main.c */,
+				6A1E04DD1ADDBB35006704C5 /* comprovacio.c */,
+				6A96D5701ADC23EC00085E3D /* comprovacio.h */,
+				6A1E04DF1ADDD4D7006704C5 /* mostrarPantalla.c */,
+				6A1E04E01ADDD4D7006704C5 /* mostrarPantalla.h */,
+				6A96D5711ADC249D00085E3D /* tipus.h */,
 			);
 			path = SOA_Practica;
 			sourceTree = "<group>";
@@ -118,6 +130,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A1E04DE1ADDBB35006704C5 /* comprovacio.c in Sources */,
+				6A1E04E11ADDD4D7006704C5 /* mostrarPantalla.c in Sources */,
 				6A96D56A1ADC1BEF00085E3D /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -232,6 +246,7 @@
 				6A96D56F1ADC1BEF00085E3D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
