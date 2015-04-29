@@ -14,6 +14,7 @@
 //Constants pel tipus de operació a realitzar
 #define OPERACIO_ERROR 0
 #define OPERACIO_INFO 1
+#define OPERACIO_FIND 2
 
 #define TIPUS_ERROR_FILE 0
 #define TIPUS_ERROR_FILE_SYS 1
