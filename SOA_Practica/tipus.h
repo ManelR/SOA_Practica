@@ -57,4 +57,14 @@ typedef struct{
     unsigned int nLastWritten;
 }DadesEXT2;
 
+typedef struct{
+    char sName[9];
+    char sExt[4];
+    char cAttr;
+    unsigned short int snTime;
+    unsigned short int snDate;
+    unsigned short int snStartCluster;
+    unsigned int nFileSize;
+}FATRootDirectory;
+
 #endif

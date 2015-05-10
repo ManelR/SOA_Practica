@@ -15,6 +15,6 @@
 //Funció que serveix per convertir el nom introduït, en el nom que surtirà en el volum FAT.
 void Buscar_PrepararNomFitxerFAT(char * sNomFitxerBuscar, char * nouNomFitxer);
 
-void Buscar_BuscarFitxerFat(char * nomVolumFAT, char * nomFitxerBuscar);
+void Buscar_BuscarFitxerFat(char * nomVolumFAT, char * nomFitxerBuscar, DadesFAT dadesFat);
 
 #endif /* defined(__SOA_Practica__buscarFitxer__) */

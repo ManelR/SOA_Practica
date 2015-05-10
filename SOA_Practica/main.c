@@ -43,7 +43,8 @@ int main(int argc, char * argv[]) {
                 if (nTipus == TIPUS_FAT) {
                     if(Comprovacio_OmpleFitxerFAT(&dadesFat, argv[2])){
                         //Mètode buscar fitxer a FAT16
-                        Buscar_PrepararNomFitxerFAT(argv[3], nomFitxer);            
+                        Buscar_PrepararNomFitxerFAT(argv[3], nomFitxer);
+                        Buscar_BuscarFitxerFat(argv[2], nomFitxer, dadesFat);
                     }
                 }else if (nTipus == TIPUS_EXT2){
                     if (Comprovacio_OmpleFitxerEXT(&dadesExt, argv[2])) {
