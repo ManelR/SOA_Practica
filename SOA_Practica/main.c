@@ -8,10 +8,12 @@
 
 #include "comprovacio.h"
 #include "mostrarPantalla.h"
+#include "buscarFitxer.h"
 
 int main(int argc, char * argv[]) {
     int nOpcio;
     int nTipus;
+    char nomFitxer[10];
     DadesFAT dadesFat;
     DadesEXT2 dadesExt;
     
@@ -35,7 +37,23 @@ int main(int argc, char * argv[]) {
                 }
             }
             break;
-            
+        case OPERACIO_FIND:
+            nTipus = Comprovacio_TipusFitxer(argv[2]);
+            if(nTipus){
+                if (nTipus == TIPUS_FAT) {
+                    if(Comprovacio_OmpleFitxerFAT(&dadesFat, argv[2])){
+                        //Mètode buscar fitxer a FAT16
+                        Buscar_PrepararNomFitxerFAT(argv[3], nomFitxer);            
+                    }
+                }else if (nTipus == TIPUS_EXT2){
+                    if (Comprovacio_OmpleFitxerEXT(&dadesExt, argv[2])) {
+                        //Mètode buscar fitxer a EXT2
+                    }
+                }else{
+                    write(1, "Error. The volumen is neither FAT16 or EXT2.\n", strlen("Error. The volumen is neither FAT16 or EXT2.\n"));
+                }
+            }
+            break;
         default:
             break;
     }

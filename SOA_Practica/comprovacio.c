@@ -10,12 +10,14 @@
 
 //Funció que comprova que els parametres siguin correctes i retorna un valor enter que representa l'opció escollida.
 int Comprovacio_ParametresEntrada(int argc, char * argv[]){
-    if (argc != 3) {
+    if (argc < 2) {
         write(1, "Error amb els parametres d'entrada\n", strlen("Error amb els parametres d'entrada\n"));
         return OPERACIO_ERROR;
     }else{
-        if (strcmp(argv[1], "/info") == 0) {
+        if (strcmp(argv[1], "/info") == 0 && argc == 3) {
             return OPERACIO_INFO;
+        }else if (strcmp(argv[1], "/find") == 0 && argc == 4){
+            return OPERACIO_FIND;
         }else{
             write(1, "Error amb els parametres d'entrada\n", strlen("Error amb els parametres d'entrada\n"));
             return OPERACIO_ERROR;
@@ -200,3 +202,4 @@ int Comprovacio_OmpleFitxerEXT(DadesEXT2* dadesExt, char * sNomFitxer){
         return OMPLE_OK;
     }
 }
+
