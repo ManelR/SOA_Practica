@@ -107,7 +107,7 @@ void Mostrar_mostrarInfoEXT(DadesEXT2 dadesext){
     write(1, sAuxText, strlen(sAuxText));
     //Flags Group
     bzero(sAuxText, sizeof(sAuxText));
-    sprintf(sAuxText, "Block Group: %d\n", dadesext.nFlagGroup);
+    sprintf(sAuxText, "Frags Group: %d\n", dadesext.nFlagGroup);
     write(1, sAuxText, strlen(sAuxText));
     //Volume Info
     write(1, "\nVOLUME INFO\n", strlen("\nVOLUME INFO\n"));

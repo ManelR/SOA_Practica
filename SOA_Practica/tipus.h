@@ -60,11 +60,18 @@ typedef struct{
 typedef struct{
     char sName[9];
     char sExt[4];
-    char cAttr;
+    unsigned char cAttr;
     unsigned short int snTime;
     unsigned short int snDate;
     unsigned short int snStartCluster;
     unsigned int nFileSize;
 }FATRootDirectory;
+
+typedef struct{
+    unsigned int numInode;
+    unsigned short int registerLength;
+    unsigned char nameLength;
+    unsigned char fileType;
+}DirectoryEXT2;
 
 #endif

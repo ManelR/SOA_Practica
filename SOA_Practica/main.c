@@ -14,6 +14,7 @@ int main(int argc, char * argv[]) {
     int nOpcio;
     int nTipus;
     char nomFitxer[10];
+    char extFitxer[5];
     DadesFAT dadesFat;
     DadesEXT2 dadesExt;
     
@@ -43,12 +44,13 @@ int main(int argc, char * argv[]) {
                 if (nTipus == TIPUS_FAT) {
                     if(Comprovacio_OmpleFitxerFAT(&dadesFat, argv[2])){
                         //Mètode buscar fitxer a FAT16
-                        Buscar_PrepararNomFitxerFAT(argv[3], nomFitxer);
-                        Buscar_BuscarFitxerFat(argv[2], nomFitxer, dadesFat);
+                        Buscar_PrepararNomFitxerFAT(argv[3], nomFitxer, extFitxer);
+                        Buscar_BuscarFitxerFat(argv[2], nomFitxer, dadesFat, extFitxer);
                     }
                 }else if (nTipus == TIPUS_EXT2){
                     if (Comprovacio_OmpleFitxerEXT(&dadesExt, argv[2])) {
                         //Mètode buscar fitxer a EXT2
+                        Buscar_BuscarFitxerExt(argv[2], argv[3], dadesExt);
                     }
                 }else{
                     write(1, "Error. The volumen is neither FAT16 or EXT2.\n", strlen("Error. The volumen is neither FAT16 or EXT2.\n"));

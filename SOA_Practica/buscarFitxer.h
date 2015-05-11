@@ -12,9 +12,13 @@
 #include <stdio.h>
 #include "tipus.h"
 
-//Funció que serveix per convertir el nom introduït, en el nom que surtirà en el volum FAT.
-void Buscar_PrepararNomFitxerFAT(char * sNomFitxerBuscar, char * nouNomFitxer);
+#define BYTE_DIRECTORY 8
 
-void Buscar_BuscarFitxerFat(char * nomVolumFAT, char * nomFitxerBuscar, DadesFAT dadesFat);
+//Funció que serveix per convertir el nom introduït, en el nom que surtirà en el volum FAT.
+void Buscar_PrepararNomFitxerFAT(char * sNomFitxerBuscar, char * nouNomFitxer,  char * extFitxerBuscar);
+
+void Buscar_BuscarFitxerFat(char * nomVolumFAT, char * nomFitxerBuscar, DadesFAT dadesFat,  char * extFitxerBuscar);
+
+void Buscar_BuscarFitxerExt(char * nomVolumEXT, char * nomFitxerBuscar, DadesEXT2 dadesExt);
 
 #endif /* defined(__SOA_Practica__buscarFitxer__) */
