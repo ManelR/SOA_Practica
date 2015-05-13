@@ -28,6 +28,8 @@ int main(int argc, char * argv[]) {
                 if (nTipus == TIPUS_FAT) {
                     if(Comprovacio_OmpleFitxerFAT(&dadesFat, argv[2])){
                         Mostrar_mostrarInfoFAT(dadesFat);
+                    }else{
+                        write(1, "File System not recognized\n", strlen("File System not recognized\n"));
                     }
                 }else if (nTipus == TIPUS_EXT2){
                     if (Comprovacio_OmpleFitxerEXT(&dadesExt, argv[2])) {
@@ -46,6 +48,8 @@ int main(int argc, char * argv[]) {
                         //Mètode buscar fitxer a FAT16
                         Buscar_PrepararNomFitxerFAT(argv[3], nomFitxer, extFitxer);
                         Buscar_BuscarFitxerFat(argv[2], nomFitxer, dadesFat, extFitxer);
+                    }else{
+                        write(1, "File System not recognized\n", strlen("File System not recognized\n"));
                     }
                 }else if (nTipus == TIPUS_EXT2){
                     if (Comprovacio_OmpleFitxerEXT(&dadesExt, argv[2])) {

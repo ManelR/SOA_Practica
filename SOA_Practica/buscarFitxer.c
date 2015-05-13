@@ -116,16 +116,99 @@ void Buscar_BuscarFitxerFat(char * nomVolumFAT, char * nomFitxerBuscar, DadesFAT
     
 }
 
+void analitzarBlockDirectori(int numBlock, DirectoryEXT2* stAux, int* fdExt, DadesEXT2 dadesExt, int * nTrobat, char * nomFitxerBuscar){
+    int nSortir = 0;
+    int numBytesLlegits = 0;
+    char sAux[256];
+    
+    if (numBlock != 0) {
+        //Moure al block de dades de la root
+        lseek(*fdExt, dadesExt.nBlockSize * numBlock, SEEK_SET);
+        //Llegir les dades
+        while (!nSortir && numBytesLlegits < dadesExt.nBlockSize && *nTrobat == 0) {
+            //Llegir la primera dada
+            numBytesLlegits += read(*fdExt, &(stAux->numInode), sizeof(unsigned int));
+            numBytesLlegits += read(*fdExt, &(stAux->registerLength), sizeof(unsigned short int));
+            numBytesLlegits += read(*fdExt, &(stAux->nameLength), 1);
+            numBytesLlegits += read(*fdExt, &(stAux->fileType), 1);
+            numBytesLlegits += read(*fdExt, sAux, stAux->nameLength);
+            //Avançar fins al final del block
+            lseek(*fdExt, stAux->registerLength - BYTE_DIRECTORY - stAux->nameLength, SEEK_CUR);
+            numBytesLlegits += (stAux->registerLength - BYTE_DIRECTORY - stAux->nameLength);
+            sAux[stAux->nameLength] = '\0';
+            if (stAux->numInode == 0) {
+                nSortir = 1;
+            }else if(stAux->fileType == 1){
+                //FILE
+                printf("%s - %u - %u\n", sAux, stAux->numInode, (unsigned int)stAux->fileType);
+                if (strcmp(nomFitxerBuscar, sAux) == 0) {
+                    *nTrobat = 1;
+                }
+            }else if(stAux->fileType == 2){
+                //DIR
+                printf("DIR: %s - %u - %u\n", sAux, stAux->numInode, (unsigned int)stAux->fileType);
+            }
+        }
+    }
+
+}
+
+void analitzarBlockPuntersDirectori(int numBlock, DirectoryEXT2 * stAux, int* fdExt, DadesEXT2 dadesExt, int* nTrobat, char* nomFitxerBuscar, int nivell){
+    unsigned int nBlockABuscar = 0;
+    unsigned int numBytesLlegits = 0;
+    int numPuntersLlegits = 0;
+    
+    if (numBlock != 0) {
+        //Moure al block que toca
+        lseek(*fdExt, numBlock * dadesExt.nBlockSize, SEEK_SET);
+        
+        if (nivell == 1) {
+            //Block de primer nivell
+            while (numBytesLlegits < dadesExt.nBlockSize && *nTrobat == 0) {
+                lseek(*fdExt, 4 * numPuntersLlegits, SEEK_CUR);
+                numBytesLlegits += read(*fdExt, &nBlockABuscar, sizeof(unsigned int));
+                //printf("%d\n", nBlockABuscar);
+                if (nBlockABuscar != 0) {
+                    analitzarBlockDirectori(nBlockABuscar, stAux, fdExt, dadesExt, nTrobat, nomFitxerBuscar);
+                }
+                numPuntersLlegits++;
+                lseek(*fdExt, numBlock * dadesExt.nBlockSize, SEEK_SET);
+            }
+        }else if (nivell == 2){
+            //Block de segon nivell
+            while (numBytesLlegits < dadesExt.nBlockSize && *nTrobat == 0) {
+                lseek(*fdExt, 4 * numPuntersLlegits, SEEK_CUR);
+                numBytesLlegits += read(*fdExt, &nBlockABuscar, sizeof(unsigned int));
+                //printf("%d\n", nBlockABuscar);
+                if (nBlockABuscar != 0) {
+                    analitzarBlockPuntersDirectori(nBlockABuscar, stAux, fdExt, dadesExt, nTrobat, nomFitxerBuscar, 1);
+                }
+                numPuntersLlegits++;
+                lseek(*fdExt, numBlock * dadesExt.nBlockSize, SEEK_SET);
+            }
+        }else if (nivell == 3){
+            //Block de tercer nivell
+            while (numBytesLlegits < dadesExt.nBlockSize && *nTrobat == 0) {
+                lseek(*fdExt, 4 * numPuntersLlegits, SEEK_CUR);
+                numBytesLlegits += read(*fdExt, &nBlockABuscar, sizeof(unsigned int));
+                //printf("%d\n", nBlockABuscar);
+                if (nBlockABuscar != 0) {
+                    analitzarBlockPuntersDirectori(nBlockABuscar, stAux, fdExt, dadesExt, nTrobat, nomFitxerBuscar, 2);
+                }
+                numPuntersLlegits++;
+                lseek(*fdExt, numBlock * dadesExt.nBlockSize, SEEK_SET);
+            }
+        }
+    }
+}
+
 void Buscar_BuscarFitxerExt(char * nomVolumEXT, char * nomFitxerBuscar, DadesEXT2 dadesExt){
     int fdExt = 0;
     unsigned int inodeTableID = 0;
     char textAux[50];
     unsigned int numBlock = 0;
-    char sAux[256];
     off_t posicioInicialTI;
-    int numBytesLlegits = 0;
     int numPunterInode = 0;
-    int nSortir = 0;
     unsigned int fitxerSize = 0;
     int nTrobat = 0;
     DirectoryEXT2 stAux;
@@ -135,8 +218,11 @@ void Buscar_BuscarFitxerExt(char * nomVolumEXT, char * nomFitxerBuscar, DadesEXT
         write(1, "Error al obrir el volum FAT\n", strlen("Error al obrir el volum FAT\n"));
     }else{
         //Arribem al superblock
-        lseek(fdExt, 1024, SEEK_SET);
-        lseek(fdExt, 1024, SEEK_CUR);
+        if (dadesExt.nBlockSize <= 1024) {
+            lseek(fdExt, dadesExt.nBlockSize * 2, SEEK_SET);
+        }else if (dadesExt.nBlockSize >= 2048){
+            lseek(fdExt, dadesExt.nBlockSize, SEEK_SET);
+        }
         lseek(fdExt, 8, SEEK_CUR);
         read(fdExt, &inodeTableID, sizeof(unsigned int));
         posicioInicialTI = lseek(fdExt, inodeTableID * dadesExt.nBlockSize, SEEK_SET);
@@ -148,37 +234,33 @@ void Buscar_BuscarFitxerExt(char * nomVolumEXT, char * nomFitxerBuscar, DadesEXT
             
             lseek(fdExt, 40 + (numPunterInode*4), SEEK_CUR);
             read(fdExt, &numBlock, sizeof(unsigned int));
-            if (numBlock != 0) {
-                //Moure al block de dades de la root
-                lseek(fdExt, dadesExt.nBlockSize * numBlock, SEEK_SET);
-                //Llegir les dades
-                while (!nSortir && numBytesLlegits < dadesExt.nBlockSize && !nTrobat) {
-                    //Llegir la primera dada
-                    numBytesLlegits += read(fdExt, &stAux.numInode, sizeof(unsigned int));
-                    numBytesLlegits += read(fdExt, &stAux.registerLength, sizeof(unsigned short int));
-                    numBytesLlegits += read(fdExt, &stAux.nameLength, 1);
-                    numBytesLlegits += read(fdExt, &stAux.fileType, 1);
-                    numBytesLlegits += read(fdExt, sAux, stAux.nameLength);
-                    //Avançar fins al final del block
-                    lseek(fdExt, stAux.registerLength - BYTE_DIRECTORY - stAux.nameLength, SEEK_CUR);
-                    numBytesLlegits += (stAux.registerLength - BYTE_DIRECTORY - stAux.nameLength);
-                    sAux[stAux.nameLength] = '\0';
-                    if (stAux.numInode == 0) {
-                        nSortir = 1;
-                    }else if(stAux.fileType == 1){
-                        //FILE
-                        //printf("%s - %u - %u\n", sAux, stAux.numInode, (unsigned int)stAux.fileType);
-                        if (strcmp(nomFitxerBuscar, sAux) == 0) {
-                            nTrobat = 1;
-                        }
-                    }else if(stAux.fileType == 2){
-                        //DIR
-                        //printf("DIR: %s - %u - %u\n", sAux, stAux.numInode, (unsigned int)stAux.fileType);
-                    }
-                }
-            }
+            analitzarBlockDirectori(numBlock, &stAux, &fdExt, dadesExt, &nTrobat, nomFitxerBuscar);
             lseek(fdExt, posicioInicialTI, SEEK_SET);
             numPunterInode++;
+        }
+        lseek(fdExt, posicioInicialTI + dadesExt.snInodeSize, SEEK_SET);
+        //Analitzar el punter de primer nivell
+        lseek(fdExt, 40 + (4*12), SEEK_CUR);
+        read(fdExt, &numBlock, sizeof(unsigned int));
+        if (numBlock != 0 && !nTrobat) {
+            //Anar a buscat el block de dades amb punters
+            analitzarBlockPuntersDirectori(numBlock, &stAux, &fdExt, dadesExt, &nTrobat, nomFitxerBuscar, 1);
+        }
+        lseek(fdExt, posicioInicialTI + dadesExt.snInodeSize, SEEK_SET);
+        //Analitzar el punter de primer nivell
+        lseek(fdExt, 40 + (4*13), SEEK_CUR);
+        read(fdExt, &numBlock, sizeof(unsigned int));
+        if (numBlock != 0 && !nTrobat) {
+            //Anar a buscat el block de dades amb punters
+            analitzarBlockPuntersDirectori(numBlock, &stAux, &fdExt, dadesExt, &nTrobat, nomFitxerBuscar, 2);
+        }
+        lseek(fdExt, posicioInicialTI + dadesExt.snInodeSize, SEEK_SET);
+        //Analitzar el punter de primer nivell
+        lseek(fdExt, 40 + (4*14), SEEK_CUR);
+        read(fdExt, &numBlock, sizeof(unsigned int));
+        if (numBlock != 0 && !nTrobat) {
+            //Anar a buscat el block de dades amb punters
+            analitzarBlockPuntersDirectori(numBlock, &stAux, &fdExt, dadesExt, &nTrobat, nomFitxerBuscar, 3);
         }
         if (nTrobat != 0){
             //Anar a buscar l'inode i mostrar la mida del fitxer

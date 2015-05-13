@@ -76,6 +76,10 @@ int Comprovacio_OmpleFitxerFAT(DadesFAT* dadesFat, char * sNomFitxer){
     int fdFile = -1;
     char sAuxText[20];
     unsigned short int snAux = 0;
+    unsigned int RootDirSector = 0;
+    unsigned int DataSec = 0;
+    unsigned short int BPB_TotSec16;
+    unsigned int CountofClusters = 0;
     char cAux;
     
     //En primer lloc omplim el FileSystem amb FAT16, ja que quan es cridi segur que és FAT16
@@ -122,6 +126,35 @@ int Comprovacio_OmpleFitxerFAT(DadesFAT* dadesFat, char * sNomFitxer){
         sAuxText[11] = '\0';
         strcpy(dadesFat->sLabel, sAuxText);
         
+        
+        
+        //COMPROVACIÓ DE FAT16 +
+        RootDirSector = ((dadesFat->snMaxRootEntries * 32) + (dadesFat->snSectorSize - 1)) / dadesFat->snSectorSize;
+        if (RootDirSector == 0) {
+            //Tancar el fitxer
+            close(fdFile);
+            return OMPLE_ERROR;
+        }
+        if (dadesFat->snSectorsPerFat == 0) {
+            //Tancar el fitxer
+            close(fdFile);
+            return OMPLE_ERROR;
+        }
+        lseek(fdFile, 19, SEEK_SET);
+        read(fdFile, &BPB_TotSec16, sizeof(unsigned short int));
+        if (BPB_TotSec16 == 0) {
+            //Tancar el fitxer
+            close(fdFile);
+            return OMPLE_ERROR;
+        }
+        
+        DataSec = BPB_TotSec16 - (dadesFat->snReservedSectors + (dadesFat->snNumFats * dadesFat->snSectorsPerFat) + RootDirSector);
+        CountofClusters = DataSec / dadesFat->snSectorCluster;
+        if(CountofClusters > 65525 || CountofClusters < 4085){
+            //Tancar el fitxer
+            close(fdFile);
+            return OMPLE_ERROR;
+        }
         //Tancar el fitxer
         close(fdFile);
         return OMPLE_OK;
