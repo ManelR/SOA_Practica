@@ -19,6 +19,10 @@ void Buscar_PrepararNomFitxerFAT(char * sNomFitxerBuscar, char * nouNomFitxer,  
 
 void Buscar_BuscarFitxerFat(char * nomVolumFAT, char * nomFitxerBuscar, DadesFAT dadesFat,  char * extFitxerBuscar);
 
-void Buscar_BuscarFitxerExt(char * nomVolumEXT, char * nomFitxerBuscar, DadesEXT2 dadesExt);
+unsigned int Buscar_BuscarFitxerExt(char * nomVolumEXT, char * nomFitxerBuscar, DadesEXT2 dadesExt);
+
+void Buscar_mostrarMidaFitxer(char * nomVolumEXT, DadesEXT2 dadesExt, unsigned int numInode);
+
+void Buscar_mostrarContingutFitxer(char * nomVolumEXT, unsigned int numInode, DadesEXT2 dadesExt);
 
 #endif /* defined(__SOA_Practica__buscarFitxer__) */
