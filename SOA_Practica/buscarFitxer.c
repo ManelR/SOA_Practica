@@ -107,6 +107,10 @@ int Buscar_BuscarFitxerFat(char * nomVolumFAT, char * nomFitxerBuscar, DadesFAT 
                         sprintf(sAux, "File found! Size: %u bytes\n", aux.nFileSize);
                         write(1, sAux, strlen(sAux));
                     }
+                }else if (archive == 0 && subdirectory != 0 && hidden == 0 && unused1 == 0 && unused2 == 0 && system == 0 && ((unsigned char)aux.sName[0]) != 0xE5){
+                    if (strcasecmp(aux.sName, nomFitxerBuscar) == 0 && strcasecmp(aux.sExt, extFitxerBuscar) == 0) {
+                        write(1, "El fitxer que busques és un directori\n", strlen("El fitxer que busques és un directori\n"));
+                    }
                 }
             }
             nContador++;

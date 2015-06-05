@@ -21,7 +21,6 @@ int main(int argc, char * argv[]) {
     char extFitxer[5];
     DadesFAT dadesFat;
     DadesEXT2 dadesExt;
-    int nSortirNom = 0;
     int nComptadorNom = 0;
     
     
@@ -105,7 +104,6 @@ int main(int argc, char * argv[]) {
 
             break;
         case OPERACIO_COPY:
-            nSortirNom = 0;
             nComptadorNom = 1;
             //Primer es comprova que el volum Ext sigui realment del format ext
             nTipus = Comprovacio_TipusFitxer(argv[2]);
