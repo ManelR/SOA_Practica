@@ -462,56 +462,96 @@ void comprovacioFATRoot(){
     //TODO implementar la comprovacio del root directory (espai)
 }
 
-void escriureFitxerFATRoot(int * fdFAT, DadesFAT dadesFat, unsigned int primerCluster, char * nomFitxer, char * extFitxer, unsigned int fitxerSize){
+void escriureFitxerFATRoot(int * fdFAT, DadesFAT dadesFat, unsigned short int primerCluster, char * nomFitxer, char * extFitxer, unsigned int fitxerSize){
     int nTrobat = 0;
     int i = 0;
+    char sNomFitxer[8], sExtFitxer[3];
     unsigned short int nTime, nDate;
     time_t epoch_time;
     struct tm *tm_p;
     int bytesRootsLlegits = 0;
     FATRootDirectory auxRoot;
     //moure fins els clusters
+    printf("\n\n%s - %s\n\n", nomFitxer, extFitxer);
+    
     lseek(*fdFAT, (dadesFat.snReservedSectors * dadesFat.snSectorSize), SEEK_SET);
     lseek(*fdFAT, (dadesFat.snNumFats * dadesFat.snSectorsPerFat * dadesFat.snSectorSize), SEEK_CUR);
     //Buscar el primer root lliure
     while (!nTrobat && bytesRootsLlegits < (dadesFat.snMaxRootEntries * 32)) {
-        read(*fdFAT, &auxRoot, sizeof(FATRootDirectory));
+        read(*fdFAT, auxRoot.sName, 8);
+        //Col·locar el \0
+        i = 0;
+        while (auxRoot.sName[i] != ' ' && i < 8) {
+            i++;
+        }
+        auxRoot.sName[i] = '\0';
+        read(*fdFAT, auxRoot.sExt, 3);
+        i = 0;
+        while (auxRoot.sExt[i] != ' ' && i < 3) {
+            i++;
+        }
+        auxRoot.sExt[i] = '\0';
+        read(*fdFAT, &auxRoot.cAttr, 1);
+        //Reserved
+        lseek(*fdFAT, 10, SEEK_CUR);
+        read(*fdFAT, &auxRoot.snTime, sizeof(unsigned short int));
+        read(*fdFAT, &auxRoot.snDate, sizeof(unsigned short int));
+        read(*fdFAT, &auxRoot.snStartCluster, sizeof(unsigned short int));
+        read(*fdFAT, &auxRoot.nFileSize, sizeof(unsigned int));
+        printf("start cluster %x", auxRoot.snStartCluster);
         bytesRootsLlegits += 32;
-        if ((auxRoot.cAttr  & 0x40) != 0 || (auxRoot.cAttr & 0x80) != 0 || ((unsigned char)auxRoot.sName[0]) != 0xE5) {
+        if ((auxRoot.cAttr  & 0x40) != 0 || (auxRoot.cAttr & 0x80) != 0 || ((unsigned char)auxRoot.sName[0]) != 0xE5 || ((unsigned char)auxRoot.sName[0]) != 0x00) {
             nTrobat = 1;
         }
     }
     //Comprovar si s'ha trobat
     if (nTrobat) {
-        lseek(*fdFAT, (-1)*sizeof(FATRootDirectory), SEEK_CUR);
-        for (i = 0; i < 8; i++) {
-            auxRoot.sName[i] = nomFitxer[i];
+        lseek(*fdFAT, -32, SEEK_CUR);
+        strcpy(auxRoot.sName, nomFitxer);
+
+        for (i = 0; i < (int)strlen(auxRoot.sName); i++) {
+            sNomFitxer[i] = auxRoot.sName[i];
         }
-        auxRoot.sName[8] = '\0';
-        auxRoot.sExt[0] = extFitxer[0];
-        auxRoot.sExt[1] = extFitxer[1];
-        auxRoot.sExt[2] = extFitxer[2];
+        for (i = (int)strlen(auxRoot.sName); i < 8; i++) {
+            sNomFitxer[i] = ' ';
+        }
+        strcpy(auxRoot.sExt, extFitxer);
+        for (i = 0; i < (int)strlen(auxRoot.sExt); i++) {
+            sExtFitxer[i] = auxRoot.sExt[i];
+        }
+        for (i = (int)strlen(auxRoot.sExt); i < 3; i++) {
+            sExtFitxer[i] = ' ';
+        }
         auxRoot.cAttr = 0x20;
         auxRoot.nFileSize = fitxerSize;
-        auxRoot.snStartCluster = (unsigned short int)primerCluster;
+        printf("fitxer size : %x\n", auxRoot.nFileSize);
+        auxRoot.snStartCluster = primerCluster;
         epoch_time = time(0);
         tm_p = localtime( &epoch_time );
-        printf("The time is %.2d:%.2d:%.2d\n",
-               tm_p->tm_hour, tm_p->tm_min, tm_p->tm_sec );
         nTime = (tm_p->tm_hour * 2048) + (tm_p->tm_min * 32) + (tm_p->tm_sec/2);
         auxRoot.snTime = nTime;
         nDate = ((tm_p->tm_year - 80)*512) + ((tm_p->tm_mon + 1)*32) + tm_p->tm_mday;
         auxRoot.snDate = nDate;
-        write(*fdFAT, &auxRoot, sizeof(FATRootDirectory));
+        //Escriure a la root
+        printf("\n---%x----\n", auxRoot.snStartCluster);
+        write(*fdFAT, sNomFitxer, 8);
+        write(*fdFAT, sExtFitxer, 3);
+        write(*fdFAT, &auxRoot.cAttr, 1);
+        lseek(*fdFAT, 10, SEEK_CUR);
+        write(*fdFAT, &nTime, sizeof(unsigned short int));
+        write(*fdFAT, &nDate, sizeof(unsigned short int));
+        write(*fdFAT, &auxRoot.snStartCluster, sizeof(unsigned short int));
+        write(*fdFAT, &auxRoot.nFileSize, sizeof(unsigned int));
     }else{
         write(1, "No hi ha espai al root directory", strlen("No hi ha espai al root directory"));
     }
 }
 
-void escriureFitxerFATCluster(int * fdFAT, DadesFAT dadesFat, int* bytesCopiats, char * contingutFitxer, unsigned int fitxerSize, unsigned int numCluster){
+void escriureFitxerFATCluster(int * fdFAT, DadesFAT dadesFat, unsigned int* bytesCopiats, char * contingutFitxer, unsigned int fitxerSize, unsigned short int numCluster){
     char * dadesACopiar;
     int i;
-    int bytesACopiar;
+    unsigned int clusterSize = 0;
+    int bytesACopiar = 0;
     //moure fins els clusters
     lseek(*fdFAT, (dadesFat.snReservedSectors * dadesFat.snSectorSize), SEEK_SET);
     lseek(*fdFAT, (dadesFat.snNumFats * dadesFat.snSectorsPerFat * dadesFat.snSectorSize), SEEK_CUR);
@@ -520,15 +560,17 @@ void escriureFitxerFATCluster(int * fdFAT, DadesFAT dadesFat, int* bytesCopiats,
     //Anar al cluster que toca
     lseek(*fdFAT, (dadesFat.snSectorCluster * dadesFat.snSectorSize) * (numCluster - 2), SEEK_CUR);
     //Escriure les dades
-    if ((fitxerSize - *bytesCopiats) < (dadesFat.snSectorCluster * dadesFat.snSectorSize)) {
+    clusterSize = (dadesFat.snSectorCluster * dadesFat.snSectorSize);
+    if ((fitxerSize - (*bytesCopiats)) > clusterSize) {
         bytesACopiar = (dadesFat.snSectorCluster * dadesFat.snSectorSize);
     }else{
-        bytesACopiar = (fitxerSize - *bytesCopiats);
+        bytesACopiar = (fitxerSize - (*bytesCopiats));
     }
     dadesACopiar = (char*)malloc(sizeof(char) * bytesACopiar);
     if (dadesACopiar != NULL) {
         for (i = 0; i < bytesACopiar; i++) {
             dadesACopiar[i] = contingutFitxer[(*bytesCopiats)++];
+            
         }
     }
     write(*fdFAT, dadesACopiar, bytesACopiar);
@@ -541,14 +583,15 @@ void Buscar_CopiarFitxerAFAT(char * nomVolumFAT, DadesFAT dadesFat, char * conti
     int numClustersComprovacio = 0;
     int nTrobat = 0;
     int nFinal = 0;
-    int bytesCopiats = 0;
-    unsigned int primerCluster = 0;
-    unsigned int numCluster = 1;
+    int nContador = 0;
+    unsigned int bytesCopiats = 0;
+    unsigned short int primerCluster = 0;
+    unsigned short int numCluster = 2;
     off_t posicio_cluster_anterior = 0;
     off_t posicio_cluster_actual = 0;
-    unsigned int auxCluster = 0;
+    unsigned short int auxCluster = 0;
     
-    fdFAT = open(nomVolumFAT, O_RDONLY);
+    fdFAT = open(nomVolumFAT, O_RDWR);
     if (fdFAT <= 0) {
         write(1, "Error al obrir el volum FAT\n", strlen("Error al obrir el volum FAT\n"));
     }else{
@@ -560,10 +603,12 @@ void Buscar_CopiarFitxerAFAT(char * nomVolumFAT, DadesFAT dadesFat, char * conti
         if(fitxerSize%(dadesFat.snSectorCluster*dadesFat.snSectorSize) != 0)numClustersTotals++;
         //Recorrer la copia de la fat per saber si hi ha espai suficient.
         //Llegir els dos primers que no serveixen
-        lseek(fdFAT, 8, SEEK_CUR);
-        read(fdFAT, &auxCluster, sizeof(unsigned int));
+        lseek(fdFAT, 6, SEEK_CUR);
+        read(fdFAT, &auxCluster, sizeof(unsigned short int));
+        nContador = 1;
         while (!nTrobat && !nFinal) {
-            bytesLLegits += sizeof(unsigned int);
+            nContador++;
+            bytesLLegits += sizeof(unsigned short int);
             if (auxCluster == 0) {
                 numClustersComprovacio++;
                 if (numClustersComprovacio == numClustersTotals) {
@@ -573,59 +618,73 @@ void Buscar_CopiarFitxerAFAT(char * nomVolumFAT, DadesFAT dadesFat, char * conti
             if (bytesLLegits == (dadesFat.snSectorsPerFat * dadesFat.snSectorSize)) {
                 nFinal = 1;
             }
-            read(fdFAT, &auxCluster, sizeof(unsigned int));
+            read(fdFAT, &auxCluster, sizeof(unsigned short int));
         }
-        printf("\n\nPRINTF PROVA ABANS DEL COPY\n\n");
         //Si nTrobat != 0 vol dir que hi ha espai suficient.
         if (nTrobat) {
             //tornem al inici
             lseek(fdFAT, (dadesFat.snReservedSectors * dadesFat.snSectorSize), SEEK_SET);
             //saltem els dos primers
-            lseek(fdFAT, 8, SEEK_CUR);
+            lseek(fdFAT, 6, SEEK_CUR);
             //-------COPIEM EL FITXER----------
             //Primer Cluster
             //Trobar el cluster lliure
             nTrobat = 0;
             //inicialitzat a 1 ja que el primer cluster és 2
-            numCluster = 1;
+            numCluster = 2;
             while (!nTrobat) {
-                read(fdFAT, &auxCluster, sizeof(unsigned int));
+                read(fdFAT, &auxCluster, sizeof(unsigned short int));
                 numCluster++;
                 if (auxCluster == 0) {
                     nTrobat = 1;
                 }
             }
             primerCluster = numCluster;
-            posicio_cluster_anterior = lseek(fdFAT, (-1)*sizeof(unsigned int), SEEK_CUR);
+            printf("primer = %u\n", primerCluster);
+            posicio_cluster_anterior = lseek(fdFAT, (-1)*sizeof(unsigned short int), SEEK_CUR);
+            printf("bytes copiats : %d\n", bytesCopiats);
+            printf("----%x----",numCluster);
             escriureFitxerFATCluster(&fdFAT, dadesFat, &bytesCopiats, contingutFitxer, fitxerSize, numCluster);
+            printf("bytes copiats : %d\n", bytesCopiats);
             printf("\n\nPRINTF PROVA DESPRES DEL ESCRIURE FITXER FAT\n\n");
             nFinal = 0;
+            //Tornar al cluster que estavem
+            lseek(fdFAT, posicio_cluster_anterior, SEEK_SET);
+            //Avançar
+            lseek(fdFAT, sizeof(unsigned short int), SEEK_CUR);
             while (!nFinal) {
                 //Trobar el cluster lliure
                 nTrobat = 0;
-                //inicialitzat a 1 ja que el primer cluster és 2
-                numCluster = 1;
                 while (!nTrobat) {
-                    read(fdFAT, &auxCluster, sizeof(unsigned int));
+                    read(fdFAT, &auxCluster, sizeof(unsigned short int));
                     numCluster++;
                     if (auxCluster == 0) {
                         nTrobat = 1;
                     }
                 }
-                posicio_cluster_actual = lseek(fdFAT, (-1)*sizeof(unsigned int), SEEK_CUR);
+
+                posicio_cluster_actual = lseek(fdFAT, (-1)*sizeof(unsigned short int), SEEK_CUR);
                 //Anar a escriure el cluster anterior
+                printf("posicio : %d\n", (int)posicio_cluster_anterior);
                 lseek(fdFAT, posicio_cluster_anterior, SEEK_SET);
-                write(fdFAT, &numCluster, sizeof(unsigned int));
+                write(fdFAT, &numCluster, sizeof(unsigned short int));
+                printf("bytes copiats : %d\n", bytesCopiats);
                 //Anar al cluster que toca i escriure la informació
                 escriureFitxerFATCluster(&fdFAT, dadesFat, &bytesCopiats, contingutFitxer, fitxerSize, numCluster);
+                                printf("bytes copiats : %d\n", bytesCopiats);
                 if (bytesCopiats >= fitxerSize) {
                     nFinal = 1;
                     lseek(fdFAT, posicio_cluster_actual, SEEK_SET);
-                    numCluster = 0x00000FF8;
-                    write(fdFAT, &numCluster, sizeof(unsigned int));
+                    numCluster = 0xFFF8;
+                    write(fdFAT, &numCluster, sizeof(unsigned short int));
                 }else{
                     posicio_cluster_anterior = posicio_cluster_actual;
                 }
+                printf("num cluster = %d\n", numCluster);
+                //Tornar al cluster que estavem
+                lseek(fdFAT, posicio_cluster_anterior, SEEK_SET);
+                //Avançar
+                lseek(fdFAT, sizeof(unsigned short int), SEEK_CUR);
             }
             //Escriure el fitxer al root
             escriureFitxerFATRoot(&fdFAT, dadesFat, primerCluster, nomFitxer, extFitxer, fitxerSize);

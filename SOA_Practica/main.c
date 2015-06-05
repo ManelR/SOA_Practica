@@ -122,16 +122,13 @@ int main(int argc, char * argv[]) {
                                 Buscar_recuperarMidaFitxer(argv[2], dadesExt, numNode, &fitxerSize);
                                 Buscar_recuperarContingutFitxer(argv[2], numNode, dadesExt, &contingutFitxer);
                                 //En primer lloc preparar el nom del fitxer
-                                Buscar_PrepararNomFitxerFAT(argv[3], nomFitxer, extFitxer, nComptadorNom);
-                                while (!nSortirNom){
-                                    if (!Buscar_BuscarFitxerFat(argv[3], nomFitxer, dadesFat, extFitxer)) {
-                                        nSortirNom = 1;
-                                    }else{
-                                        nComptadorNom++;
-                                        Buscar_PrepararNomFitxerFAT(argv[3], nomFitxer, extFitxer, nComptadorNom);
-                                    }
+                                Buscar_PrepararNomFitxerFAT(argv[4], nomFitxer, extFitxer, nComptadorNom);
+                                
+                                if (!Buscar_BuscarFitxerFat(argv[3], nomFitxer, dadesFat, extFitxer)) {
+                                    Buscar_CopiarFitxerAFAT(argv[3], dadesFat, contingutFitxer, fitxerSize, nomFitxer, extFitxer);
+                                }else{
+                                    write(1, "El fitxer ja existeix", strlen("El fitxer ja existeix"));
                                 }
-                                Buscar_CopiarFitxerAFAT(argv[3], dadesFat, contingutFitxer, fitxerSize, nomFitxer, extFitxer);
                             }
                         }else{
                             write(1, "Error. EL volum 2 no és FAT16\n", strlen("Error. EL volum 2 no és FAT16\n"));
