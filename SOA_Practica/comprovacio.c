@@ -19,6 +19,8 @@ int Comprovacio_ParametresEntrada(int argc, char * argv[]){
             return OPERACIO_FIND;
         }else if (strcmp(argv[1], "/cat") == 0 && argc == 4){
             return OPERACIO_CAT;
+        }else if (strcmp(argv[1], "/copy") == 0 && argc == 5){
+            return OPERACIO_COPY;
         }else{
             return OPERACIO_ERROR;
         }
